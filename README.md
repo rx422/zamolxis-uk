@@ -1,4 +1,4 @@
-# zamolxis.uk — Homelab Dashboard
+# Zamolxis — Homelab Dashboard
 
 A minimal, static dashboard for self-hosted homelab services. Built for GitHub Pages — no build tools, no dependencies, just HTML, CSS, and JS.
 
@@ -51,4 +51,4 @@ If an app isn't on the icon CDN, use `selfIcon: true` instead of `icon` to fetch
 
 ## License
 
-MIT
+AGPL-3.0 License. See [LICENSE](LICENSE) for details.

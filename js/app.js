@@ -77,7 +77,7 @@
     { name: 'ComfyUI',          slug: 'comfyui',       icon: 'comfyui',     category: 'ai' },
     { name: 'KoboldCPP',        slug: 'koboldcpp',     icon: 'koboldcpp',   category: 'ai' },
     { name: 'InvenTree',        slug: 'inventree',     icon: 'inventree',   category: 'utm', tailscaleOnly: true },
-    { name: 'Stream Service',   slug: 'stream',        iconUrl: 'https://stream.zamolxis.uk/favicon.svg', category: 'utm', tailscaleOnly: true }
+    { name: 'Stream Server',   slug: 'stream',        iconUrl: 'https://stream.zamolxis.uk/favicon.svg', category: 'utm', tailscaleOnly: true }
   ];
 
 
