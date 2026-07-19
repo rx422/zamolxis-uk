@@ -49,6 +49,9 @@
    *   icon     — filename on the CDN (without .png); omit if selfIcon is true
    *   selfIcon — true if the service serves its own /favicon.svg instead of
    *              using the icon CDN (tried on both local and tailscale hosts)
+   *   localHttps — true if the local URL must use https:// instead of the
+   *                default http:// (e.g. a Webtop/KasmVNC backend that
+   *                doesn't serve plain HTTP even on the LAN)
    *   category — key in CATEGORIES
    */
   var SERVICES = [
@@ -57,10 +60,13 @@
     { name: 'Filmography',      slug: 'filmography',   selfIcon: true,      category: 'media' },
     { name: 'AFFiNE',           slug: 'affine',        icon: 'affine',      category: 'prod' },
     { name: 'Vikunja',          slug: 'vikunja',        icon: 'vikunja',     category: 'prod' },
+    { name: 'Obsidian',         slug: 'obsidian',      icon: 'obsidian',    category: 'prod', localHttps: true },
     { name: 'Portainer',        slug: 'portainer',     icon: 'portainer',   category: 'infra' },
     { name: 'Portainer (MSI)',  slug: 'portainer-msi', icon: 'portainer',   category: 'infra' },
     { name: 'FileBrowser',      slug: 'filebrowser',   icon: 'filebrowser', category: 'infra' },
     { name: 'Uptime Kuma',      slug: 'uptime',        icon: 'uptime-kuma', category: 'infra' },
+    { name: 'OMV Sklad',        slug: 'sklad',         icon: 'openmediavault', category: 'infra' },
+    { name: 'OMV Raspberry Pi', slug: 'raspberrypi',   icon: 'openmediavault', category: 'infra' },
     { name: 'ComfyUI',          slug: 'comfyui',       icon: 'comfyui',     category: 'ai' },
     { name: 'KoboldCPP',        slug: 'koboldcpp',     icon: 'koboldcpp',   category: 'ai' }
   ];
@@ -79,10 +85,12 @@
 
   /**
    * Build URL for a service based on current network mode.
+   * forceHttps — use https:// even in local mode (for backends, e.g.
+   * Webtop/KasmVNC, that don't serve plain HTTP even on the LAN).
    */
-  function buildUrl(slug, mode) {
+  function buildUrl(slug, mode, forceHttps) {
     if (mode === 'local') {
-      return 'http://' + slug + '.local';
+      return (forceHttps ? 'https://' : 'http://') + slug + '.local';
     }
     return 'https://' + slug + '.zamolxis.uk';
   }
@@ -183,7 +191,7 @@
       grid.className = 'cards-grid';
 
       items.forEach(function (svc) {
-        var url = buildUrl(svc.slug, currentMode);
+        var url = buildUrl(svc.slug, currentMode, svc.localHttps);
         var card = document.createElement('a');
         card.className = 'card';
         card.href = url;
