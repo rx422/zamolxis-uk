@@ -38,6 +38,7 @@
   --cat-prod:   #61afef;
   --cat-infra:  #98c379;
   --cat-ai:     #c678dd;
+  --cat-utm:    #e5c07b;
 
   /* Typography */
   --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -336,6 +337,12 @@ img {
   display: none;
 }
 
+.card--disabled {
+  opacity: 0.55;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
 
 /* ----------------------------
    9. Card Logo
@@ -386,6 +393,11 @@ img {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.card__url--badge {
+  font-family: var(--font-sans);
+  font-style: italic;
 }
 
 .card__status {

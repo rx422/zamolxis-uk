@@ -39,19 +39,26 @@
     media:  { name: 'Media & Photos', color: 'var(--cat-media)' },
     prod:   { name: 'Productivity',   color: 'var(--cat-prod)' },
     infra:  { name: 'Infrastructure', color: 'var(--cat-infra)' },
-    ai:     { name: 'AI & Creative',  color: 'var(--cat-ai)' }
+    ai:     { name: 'AI & Creative',  color: 'var(--cat-ai)' },
+    utm:    { name: 'University / UTM', color: 'var(--cat-utm)' }
   };
 
   /**
    * Service list.
    *   name     — display name
    *   slug     — used to build the URL
-   *   icon     — filename on the CDN (without .png); omit if selfIcon is true
+   *   icon     — filename on the CDN (without .png); omit if selfIcon or iconUrl is set
    *   selfIcon — true if the service serves its own /favicon.svg instead of
    *              using the icon CDN (tried on both local and tailscale hosts)
+   *   iconUrl  — literal favicon URL to use as-is instead of the icon CDN
+   *              (for services with only one reachable host, e.g. tailscaleOnly)
    *   localHttps — true if the local URL must use https:// instead of the
    *                default http:// (e.g. a Webtop/KasmVNC backend that
    *                doesn't serve plain HTTP even on the LAN)
+   *   tailscaleOnly — true if the service has no .local counterpart (only
+   *                   reachable over Tailscale); its card is rendered
+   *                   disabled/grayed-out with a "Tailscale only" label
+   *                   while in Local mode
    *   category — key in CATEGORIES
    */
   var SERVICES = [
@@ -64,11 +71,13 @@
     { name: 'Portainer',        slug: 'portainer',     icon: 'portainer',   category: 'infra' },
     { name: 'Portainer (MSI)',  slug: 'portainer-msi', icon: 'portainer',   category: 'infra' },
     { name: 'FileBrowser',      slug: 'filebrowser',   icon: 'filebrowser', category: 'infra' },
-    { name: 'Uptime Kuma',      slug: 'uptime',        icon: 'uptime-kuma', category: 'infra' },
     { name: 'OMV Sklad',        slug: 'sklad',         icon: 'openmediavault', category: 'infra' },
     { name: 'OMV Raspberry Pi', slug: 'raspberrypi',   icon: 'openmediavault', category: 'infra' },
+    { name: 'Uptime Kuma',      slug: 'uptime',        icon: 'uptime-kuma', category: 'infra' },
     { name: 'ComfyUI',          slug: 'comfyui',       icon: 'comfyui',     category: 'ai' },
-    { name: 'KoboldCPP',        slug: 'koboldcpp',     icon: 'koboldcpp',   category: 'ai' }
+    { name: 'KoboldCPP',        slug: 'koboldcpp',     icon: 'koboldcpp',   category: 'ai' },
+    { name: 'InvenTree',        slug: 'inventree',     icon: 'inventree',   category: 'utm', tailscaleOnly: true },
+    { name: 'Stream Service',   slug: 'stream',        iconUrl: 'https://stream.zamolxis.uk/favicon.svg', category: 'utm', tailscaleOnly: true }
   ];
 
 
@@ -191,10 +200,15 @@
       grid.className = 'cards-grid';
 
       items.forEach(function (svc) {
-        var url = buildUrl(svc.slug, currentMode, svc.localHttps);
+        var disabled = !!svc.tailscaleOnly && currentMode === 'local';
+        var url = disabled ? null : buildUrl(svc.slug, currentMode, svc.localHttps);
         var card = document.createElement('a');
-        card.className = 'card';
-        card.href = url;
+        card.className = 'card' + (disabled ? ' card--disabled' : '');
+        if (disabled) {
+          card.setAttribute('aria-disabled', 'true');
+        } else {
+          card.href = url;
+        }
         card.setAttribute('data-name', svc.name.toLowerCase());
         card.setAttribute('data-category', catKey);
 
@@ -208,13 +222,20 @@
           '</div>' +
           '<div class="card__info">' +
             '<div class="card__name">' + svc.name + '</div>' +
-            '<div class="card__url">' + stripProtocol(url) + '</div>' +
+            '<div class="card__url' + (disabled ? ' card__url--badge' : '') + '">' +
+              (disabled ? 'Tailscale only' : stripProtocol(url)) +
+            '</div>' +
           '</div>';
 
         var logo = document.createElement('img');
         logo.className = 'card__logo';
         logo.alt = '';
         logo.loading = 'lazy';
+
+        function fallbackToInitials() {
+          logo.style.display = 'none';
+          logo.nextElementSibling.style.display = 'flex';
+        }
 
         if (svc.selfIcon) {
           var candidates = buildSelfIconUrls(svc.slug);
@@ -224,16 +245,15 @@
             if (attempt < candidates.length) {
               logo.src = candidates[attempt];
             } else {
-              logo.style.display = 'none';
-              logo.nextElementSibling.style.display = 'flex';
+              fallbackToInitials();
             }
           };
           logo.src = candidates[0];
+        } else if (svc.iconUrl) {
+          logo.onerror = fallbackToInitials;
+          logo.src = svc.iconUrl;
         } else {
-          logo.onerror = function () {
-            logo.style.display = 'none';
-            logo.nextElementSibling.style.display = 'flex';
-          };
+          logo.onerror = fallbackToInitials;
           logo.src = ICON_CDN + svc.icon + '.png';
         }
 
