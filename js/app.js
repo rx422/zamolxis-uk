@@ -46,13 +46,15 @@
    * Service list.
    *   name     — display name
    *   slug     — used to build the URL
-   *   icon     — filename on the CDN (without .png)
+   *   icon     — filename on the CDN (without .png); omit if selfIcon is true
+   *   selfIcon — true if the service serves its own /favicon.svg instead of
+   *              using the icon CDN (tried on both local and tailscale hosts)
    *   category — key in CATEGORIES
    */
   var SERVICES = [
     { name: 'Immich',           slug: 'immich',        icon: 'immich',      category: 'media' },
     { name: 'Emby',             slug: 'emby',          icon: 'emby',        category: 'media' },
-    { name: 'Filmography',      slug: 'filmography',   icon: 'filmography', category: 'media' },
+    { name: 'Filmography',      slug: 'filmography',   selfIcon: true,      category: 'media' },
     { name: 'AFFiNE',           slug: 'affine',        icon: 'affine',      category: 'prod' },
     { name: 'Vikunja',          slug: 'vikunja',        icon: 'vikunja',     category: 'prod' },
     { name: 'Portainer',        slug: 'portainer',     icon: 'portainer',   category: 'infra' },
@@ -90,6 +92,18 @@
    */
   function stripProtocol(url) {
     return url.replace(/^https?:\/\//, '');
+  }
+
+  /**
+   * Build both candidate favicon URLs for a self-hosted service's own
+   * favicon.svg, ordered so the one matching the current network mode
+   * is tried first (the other is only reachable from a different network).
+   */
+  function buildSelfIconUrls(slug) {
+    var primary = buildUrl(slug, currentMode);
+    var secondaryMode = currentMode === 'local' ? 'tailscale' : 'local';
+    var secondary = buildUrl(slug, secondaryMode);
+    return [primary + '/favicon.svg', secondary + '/favicon.svg'];
   }
 
   /**
@@ -177,13 +191,10 @@
         card.setAttribute('data-category', catKey);
 
         // Logo
-        var iconUrl = ICON_CDN + svc.icon + '.png';
         var hue = hashHue(svc.name);
         var fallbackBg = 'hsl(' + hue + ', 40%, 28%)';
 
         card.innerHTML =
-          '<img class="card__logo" src="' + iconUrl + '" alt="" loading="lazy" ' +
-            'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
           '<div class="card__logo-fallback" style="display:none;background:' + fallbackBg + '">' +
             getInitials(svc.name) +
           '</div>' +
@@ -191,6 +202,34 @@
             '<div class="card__name">' + svc.name + '</div>' +
             '<div class="card__url">' + stripProtocol(url) + '</div>' +
           '</div>';
+
+        var logo = document.createElement('img');
+        logo.className = 'card__logo';
+        logo.alt = '';
+        logo.loading = 'lazy';
+
+        if (svc.selfIcon) {
+          var candidates = buildSelfIconUrls(svc.slug);
+          var attempt = 0;
+          logo.onerror = function () {
+            attempt++;
+            if (attempt < candidates.length) {
+              logo.src = candidates[attempt];
+            } else {
+              logo.style.display = 'none';
+              logo.nextElementSibling.style.display = 'flex';
+            }
+          };
+          logo.src = candidates[0];
+        } else {
+          logo.onerror = function () {
+            logo.style.display = 'none';
+            logo.nextElementSibling.style.display = 'flex';
+          };
+          logo.src = ICON_CDN + svc.icon + '.png';
+        }
+
+        card.insertBefore(logo, card.firstChild);
 
         grid.appendChild(card);
       });

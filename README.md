@@ -34,6 +34,12 @@ Edit `js/app.js` → the `SERVICES` array:
 - `icon` — filename on the [dashboard-icons CDN](https://github.com/walkxcode/dashboard-icons/tree/main/png) (without `.png`)
 - `category` — one of `media`, `prod`, `infra`, `ai`
 
+If an app isn't on the icon CDN, use `selfIcon: true` instead of `icon` to fetch its own `/favicon.svg` directly (tried on both the `.local` and `.zamolxis.uk` hosts, falling back to initials if neither responds):
+
+```js
+{ name: 'MyApp', slug: 'myapp', selfIcon: true, category: 'infra' }
+```
+
 ## Deployment
 
 1. Push to `github.com/rx422/zamolxis-uk`.
