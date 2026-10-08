@@ -83,7 +83,7 @@
   // State
   // ===========================
 
-  var currentMode = 'local';
+  var currentMode = 'tailscale';
 
 
   // ===========================
